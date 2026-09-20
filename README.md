@@ -29,6 +29,7 @@ For testing, the icon always appears when you target yourself.
 Use `/tmid` to open the position menu. The horizontal slider controls the
 icon's X position from `-200` to `0`; select **Save position** to store the
 current value and close the menu.
+Note that this setting is not currently working due to the client not reading the SavedVariables: https://us.forums.blizzard.com/en/wow/t/uiaddon-settings-wiped-on-client-restart/2353992
 
 ## What the icon means
 
