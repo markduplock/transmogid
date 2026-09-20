@@ -2,7 +2,7 @@
 ## Title: Transmog ID
 ## Notes: Shows an icon on the target frame when inspect data reports an applied transmog.
 ## Author: Altix
-## Version: 0.1.2
+## Version: 0.2.0
 ## IconTexture: Interface\AddOns\TransmogID\media\transmog-wardrobe
 ## SavedVariables: TransmogIDDB
 

@@ -1,22 +1,47 @@
 local addonName = ...
 local TransmogID = CreateFrame("Frame")
+
 local pendingGUID
 local lastInspectRequest = 0
 local INSPECT_COOLDOWN_SECONDS = 2
-local DEFAULT_ICON_X_OFFSET = -24
+
+local DEFAULT_ICON_X_OFFSET = -10
+local DEFAULT_ICON_Y_OFFSET = 0
 local MIN_ICON_X_OFFSET = -200
 local MAX_ICON_X_OFFSET = 0
-local ICON_Y_OFFSET = -8
+local MIN_ICON_Y_OFFSET = -90
+local MAX_ICON_Y_OFFSET = 0
 local iconXOffset = DEFAULT_ICON_X_OFFSET
+local iconYOffset = DEFAULT_ICON_Y_OFFSET
+local BASE_ICON_SIZE = 18
+local MIN_ICON_SCALE = 1
+local MAX_ICON_SCALE = 4
+local PREVIEW_SCALE_MARGIN = BASE_ICON_SIZE * (MAX_ICON_SCALE - 1) / 2
+local iconScale = MIN_ICON_SCALE
+local previewTarget
+local previewIcon
 
 local icon = CreateFrame("Frame", addonName .. "TargetIcon", TargetFrame)
-icon:SetSize(18, 18)
+icon:SetSize(BASE_ICON_SIZE, BASE_ICON_SIZE)
 icon:SetFrameStrata("MEDIUM")
 icon:Hide()
 
 local function positionIcon()
+    local centreX = iconXOffset - BASE_ICON_SIZE / 2
+    local centreY = iconYOffset - BASE_ICON_SIZE / 2
     icon:ClearAllPoints()
-    icon:SetPoint("TOPRIGHT", TargetFrame, "TOPRIGHT", iconXOffset, ICON_Y_OFFSET)
+    icon:SetPoint("CENTER", TargetFrame, "TOPRIGHT", centreX, centreY)
+    if previewIcon then
+        previewIcon:ClearAllPoints()
+        previewIcon:SetPoint("CENTER", previewTarget, "TOPRIGHT", centreX, centreY)
+    end
+end
+
+local function resizeIcon()
+    icon:SetSize(BASE_ICON_SIZE * iconScale, BASE_ICON_SIZE * iconScale)
+    if previewIcon then
+        previewIcon:SetSize(BASE_ICON_SIZE * iconScale, BASE_ICON_SIZE * iconScale)
+    end
 end
 
 local texture = icon:CreateTexture(nil, "ARTWORK")
@@ -29,7 +54,7 @@ border:SetPoint("BOTTOMRIGHT", 1, -1)
 border:SetTexture("Interface\\Buttons\\UI-Quickslot2")
 
 local optionsMenu = CreateFrame("Frame", addonName .. "OptionsMenu", UIParent)
-optionsMenu:SetSize(250, 104)
+optionsMenu:SetSize(250, 224)
 optionsMenu:SetFrameStrata("DIALOG")
 optionsMenu:SetPoint("CENTER", UIParent, "CENTER", 0, 100)
 optionsMenu:Hide()
@@ -38,72 +63,243 @@ local menuBackground = optionsMenu:CreateTexture(nil, "BACKGROUND")
 menuBackground:SetAllPoints()
 menuBackground:SetColorTexture(0.05, 0.05, 0.05, 0.95)
 
+local previewPanel = CreateFrame("Frame", nil, optionsMenu)
+previewPanel:SetPoint("BOTTOM", optionsMenu, "TOP", 0, 8)
+
+local previewBackground = previewPanel:CreateTexture(nil, "BACKGROUND")
+previewBackground:SetAllPoints()
+previewBackground:SetColorTexture(0.05, 0.05, 0.05, 0.95)
+
+local previewTitle = previewPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+previewTitle:SetPoint("TOP", 0, -10)
+previewTitle:SetText("Player frame preview")
+
+previewTarget = CreateFrame("Frame", nil, previewPanel)
+previewTarget:SetPoint("TOPRIGHT", previewPanel, "TOPRIGHT",
+    -20 - PREVIEW_SCALE_MARGIN, -36 - PREVIEW_SCALE_MARGIN)
+
+local previewArtwork = previewTarget:CreateTexture(nil, "ARTWORK")
+previewArtwork:SetPoint("TOPRIGHT", previewTarget, "TOPRIGHT", 0, 0)
+previewArtwork:SetTexture("Interface\\AddOns\\" .. addonName .. "\\media\\player-frame-preview")
+previewArtwork:SetTexCoord(0, 244 / 256, 0, 92 / 128)
+
+previewIcon = CreateFrame("Frame", nil, previewTarget)
+local previewTexture = previewIcon:CreateTexture(nil, "ARTWORK")
+previewTexture:SetAllPoints()
+previewTexture:SetTexture("Interface\\AddOns\\" .. addonName .. "\\media\\transmog-wardrobe")
+
+local previewBorder = previewIcon:CreateTexture(nil, "OVERLAY")
+previewBorder:SetPoint("TOPLEFT", -1, 1)
+previewBorder:SetPoint("BOTTOMRIGHT", 1, -1)
+previewBorder:SetTexture("Interface\\Buttons\\UI-Quickslot2")
+
+local function refreshPreview()
+    local width, height = TargetFrame:GetSize()
+    if not width or width <= 0 then width = 250 end
+    if not height or height <= 0 then height = 100 end
+    previewTarget:SetSize(width, height)
+    local artworkHeight = width * 92 / 244
+    previewArtwork:SetSize(width, artworkHeight)
+    local maxIconSize = BASE_ICON_SIZE * MAX_ICON_SCALE
+    local previewHeight = math.max(height, artworkHeight, -MIN_ICON_Y_OFFSET + maxIconSize)
+        + 56 + PREVIEW_SCALE_MARGIN
+    previewPanel:SetSize(
+        math.max(width, -MIN_ICON_X_OFFSET + maxIconSize) + 40 + PREVIEW_SCALE_MARGIN,
+        previewHeight
+    )
+    optionsMenu:ClearAllPoints()
+    optionsMenu:SetPoint("CENTER", UIParent, "CENTER", 0, -(previewHeight + 8) / 2)
+    resizeIcon()
+    positionIcon()
+end
+
 local menuTitle = optionsMenu:CreateFontString(nil, "ARTWORK", "GameFontNormal")
 menuTitle:SetPoint("TOP", 0, -10)
-menuTitle:SetText("Transmog ID position")
+menuTitle:SetText("Transmog ID settings")
 
-local positionLabel = optionsMenu:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-positionLabel:SetPoint("BOTTOM", 0, 38)
+local xPositionLabel = optionsMenu:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+xPositionLabel:SetPoint("TOP", 0, -50)
+local yPositionLabel = optionsMenu:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+yPositionLabel:SetPoint("TOP", 0, -96)
+local scaleLabel = optionsMenu:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+scaleLabel:SetPoint("TOP", 0, -142)
 
-local positionSlider = CreateFrame("Slider", nil, optionsMenu)
-positionSlider:SetPoint("TOPLEFT", 18, -30)
-positionSlider:SetPoint("TOPRIGHT", -18, -30)
-positionSlider:SetHeight(16)
-positionSlider:SetOrientation("HORIZONTAL")
-positionSlider:SetMinMaxValues(MIN_ICON_X_OFFSET, MAX_ICON_X_OFFSET)
-positionSlider:SetValueStep(1)
-if positionSlider.SetObeyStepOnDrag then
-    positionSlider:SetObeyStepOnDrag(true)
+local xPositionSlider = CreateFrame("Slider", nil, optionsMenu)
+xPositionSlider:SetPoint("TOPLEFT", 18, -30)
+xPositionSlider:SetPoint("TOPRIGHT", -18, -30)
+xPositionSlider:SetHeight(16)
+xPositionSlider:SetOrientation("HORIZONTAL")
+xPositionSlider:SetMinMaxValues(MIN_ICON_X_OFFSET, MAX_ICON_X_OFFSET)
+xPositionSlider:SetValueStep(1)
+if xPositionSlider.SetObeyStepOnDrag then
+    xPositionSlider:SetObeyStepOnDrag(true)
 end
-positionSlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
+xPositionSlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
 
-local sliderTrack = positionSlider:CreateTexture(nil, "BACKGROUND")
-sliderTrack:SetPoint("LEFT")
-sliderTrack:SetPoint("RIGHT")
-sliderTrack:SetHeight(8)
-sliderTrack:SetTexture("Interface\\Buttons\\UI-SliderBar-Background")
+local xSliderTrack = xPositionSlider:CreateTexture(nil, "BACKGROUND")
+xSliderTrack:SetPoint("LEFT")
+xSliderTrack:SetPoint("RIGHT")
+xSliderTrack:SetHeight(8)
+xSliderTrack:SetTexture("Interface\\Buttons\\UI-SliderBar-Background")
 
-positionSlider:SetScript("OnValueChanged", function(_, value)
+xPositionSlider:SetScript("OnValueChanged", function(_, value)
     iconXOffset = value
     positionIcon()
-    positionLabel:SetText(("Horizontal position: %d"):format(value))
+    xPositionLabel:SetText(("Horizontal position: %d"):format(value))
 end)
+
+local yPositionSlider = CreateFrame("Slider", nil, optionsMenu)
+yPositionSlider:SetPoint("TOPLEFT", 18, -76)
+yPositionSlider:SetPoint("TOPRIGHT", -18, -76)
+yPositionSlider:SetHeight(16)
+yPositionSlider:SetOrientation("HORIZONTAL")
+yPositionSlider:SetMinMaxValues(MIN_ICON_Y_OFFSET, MAX_ICON_Y_OFFSET)
+yPositionSlider:SetValueStep(1)
+if yPositionSlider.SetObeyStepOnDrag then
+    yPositionSlider:SetObeyStepOnDrag(true)
+end
+yPositionSlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
+
+local ySliderTrack = yPositionSlider:CreateTexture(nil, "BACKGROUND")
+ySliderTrack:SetPoint("LEFT")
+ySliderTrack:SetPoint("RIGHT")
+ySliderTrack:SetHeight(8)
+ySliderTrack:SetTexture("Interface\\Buttons\\UI-SliderBar-Background")
+
+yPositionSlider:SetScript("OnValueChanged", function(_, value)
+    iconYOffset = value
+    positionIcon()
+    yPositionLabel:SetText(("Vertical position: %d"):format(value))
+end)
+
+local scaleSlider = CreateFrame("Slider", nil, optionsMenu)
+scaleSlider:SetPoint("TOPLEFT", 18, -122)
+scaleSlider:SetPoint("TOPRIGHT", -18, -122)
+scaleSlider:SetHeight(16)
+scaleSlider:SetOrientation("HORIZONTAL")
+scaleSlider:SetMinMaxValues(MIN_ICON_SCALE, MAX_ICON_SCALE)
+scaleSlider:SetValueStep(0.1)
+if scaleSlider.SetObeyStepOnDrag then
+    scaleSlider:SetObeyStepOnDrag(true)
+end
+scaleSlider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
+
+local scaleSliderTrack = scaleSlider:CreateTexture(nil, "BACKGROUND")
+scaleSliderTrack:SetPoint("LEFT")
+scaleSliderTrack:SetPoint("RIGHT")
+scaleSliderTrack:SetHeight(8)
+scaleSliderTrack:SetTexture("Interface\\Buttons\\UI-SliderBar-Background")
+
+scaleSlider:SetScript("OnValueChanged", function(_, value)
+    iconScale = value
+    resizeIcon()
+    scaleLabel:SetText(("Scale: %.1fx"):format(value))
+end)
+
+local menuOriginalSettings
+
+local function syncSettingsControls()
+    xPositionSlider:SetValue(iconXOffset)
+    yPositionSlider:SetValue(iconYOffset)
+    scaleSlider:SetValue(iconScale)
+    xPositionLabel:SetText(("Horizontal position: %d"):format(iconXOffset))
+    yPositionLabel:SetText(("Vertical position: %d"):format(iconYOffset))
+    scaleLabel:SetText(("Scale: %.1fx"):format(iconScale))
+end
+
+local function cancelSettings()
+    if menuOriginalSettings then
+        iconXOffset = menuOriginalSettings.iconXOffset
+        iconYOffset = menuOriginalSettings.iconYOffset
+        iconScale = menuOriginalSettings.iconScale
+        resizeIcon()
+        positionIcon()
+        syncSettingsControls()
+        menuOriginalSettings = nil
+    end
+    optionsMenu:Hide()
+end
 
 local savePositionButton = CreateFrame("Button", nil, optionsMenu, "UIPanelButtonTemplate")
 savePositionButton:SetSize(110, 22)
-savePositionButton:SetPoint("BOTTOM", 0, 10)
-savePositionButton:SetText("Save position")
+savePositionButton:SetPoint("BOTTOMLEFT", 10, 10)
+savePositionButton:SetText("Save settings")
 savePositionButton:SetScript("OnClick", function()
     if type(TransmogIDDB) ~= "table" then
         TransmogIDDB = {}
     end
 
     TransmogIDDB.iconXOffset = iconXOffset
+    TransmogIDDB.iconYOffset = iconYOffset
+    TransmogIDDB.iconScale = iconScale
+    menuOriginalSettings = nil
     optionsMenu:Hide()
 end)
 
+local cancelButton = CreateFrame("Button", nil, optionsMenu, "UIPanelButtonTemplate")
+cancelButton:SetSize(110, 22)
+cancelButton:SetPoint("BOTTOMRIGHT", -10, 10)
+cancelButton:SetText("Cancel")
+cancelButton:SetScript("OnClick", cancelSettings)
+
+local resetButton = CreateFrame("Button", nil, optionsMenu, "UIPanelButtonTemplate")
+resetButton:SetSize(160, 22)
+resetButton:SetPoint("BOTTOM", 0, 38)
+resetButton:SetText("Reset to defaults")
+resetButton:SetScript("OnClick", function()
+    iconXOffset = DEFAULT_ICON_X_OFFSET
+    iconYOffset = DEFAULT_ICON_Y_OFFSET
+    iconScale = MIN_ICON_SCALE
+    resizeIcon()
+    positionIcon()
+    syncSettingsControls()
+end)
+
 local function loadSavedPosition()
-    local savedOffset
+    local savedXOffset
+    local savedYOffset
+    local savedScale
     if type(TransmogIDDB) == "table" then
-        savedOffset = TransmogIDDB.iconXOffset
+        savedXOffset = TransmogIDDB.iconXOffset
+        savedYOffset = TransmogIDDB.iconYOffset
+        savedScale = TransmogIDDB.iconScale
     end
 
-    if type(savedOffset) == "number" then
-        iconXOffset = math.max(MIN_ICON_X_OFFSET, math.min(savedOffset, MAX_ICON_X_OFFSET))
+    if type(savedXOffset) == "number" then
+        iconXOffset = math.max(MIN_ICON_X_OFFSET, math.min(savedXOffset, MAX_ICON_X_OFFSET))
     else
         iconXOffset = DEFAULT_ICON_X_OFFSET
     end
 
+    if type(savedYOffset) == "number" then
+        iconYOffset = math.max(MIN_ICON_Y_OFFSET, math.min(savedYOffset, MAX_ICON_Y_OFFSET))
+    else
+        iconYOffset = DEFAULT_ICON_Y_OFFSET
+    end
+
+    if type(savedScale) == "number" then
+        iconScale = math.max(MIN_ICON_SCALE, math.min(savedScale, MAX_ICON_SCALE))
+    else
+        iconScale = MIN_ICON_SCALE
+    end
+
+    resizeIcon()
     positionIcon()
 end
 
 local function toggleOptionsMenu()
     if optionsMenu:IsShown() then
-        optionsMenu:Hide()
+        cancelSettings()
         return
     end
 
-    positionSlider:SetValue(iconXOffset)
+    menuOriginalSettings = {
+        iconXOffset = iconXOffset,
+        iconYOffset = iconYOffset,
+        iconScale = iconScale,
+    }
+    syncSettingsControls()
+    refreshPreview()
     optionsMenu:Show()
 end
 
@@ -180,7 +376,6 @@ local function inspectTarget()
     end
 
     if UnitIsUnit("target", "player") then
-        icon:Show()
         return
     end
 
@@ -219,3 +414,4 @@ TransmogID:SetScript("OnEvent", function(self, event, arg1)
         pendingGUID = nil
     end
 end)
+

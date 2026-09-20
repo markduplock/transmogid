@@ -1,3 +1,4 @@
+![Transmog ID](media/transmogid_icon.png)
 # Transmog ID
 
 Transmog ID adds a small wardrobe icon to the default target frame when a
@@ -28,13 +29,21 @@ Target a nearby player. If their displayed equipment includes a transmogged
 appearance or weapon illusion, the wardrobe icon appears in the upper-right
 area of the standard target frame.
 
-For testing, the icon always appears when you target yourself.
+Use `/tmid` to open the settings menu and a player-frame image preview.
 
-Use `/tmid` to open the position menu. The horizontal slider controls the
-icon's X position from `-200` to `0`; select **Save position** to store the
-current value and close the menu.
+The sliders adjust horizontal position (`-200` to `0`), vertical position
+(`-90` to `0`), and size (`1x` to `4x`) with immediate preview updates.
 
-Note that this setting is not currently working due to the client not reading the SavedVariables: https://us.forums.blizzard.com/en/wow/t/uiaddon-settings-wiped-on-client-restart/2353992
+**Save settings** stores all three values and closes the menu.
+
+**Cancel** restores the values from when the menu opened. Closing with `/tmid` also cancels.
+
+**Reset to defaults** previews the default position and size; Save keeps them,
+and Cancel undoes the reset.
+
+The preview disappears when the menu closes.
+
+Note that saved settings are not currently working due to the client not reading the SavedVariables: https://us.forums.blizzard.com/en/wow/t/uiaddon-settings-wiped-on-client-restart/2353992
 
 ## What the icon means
 
