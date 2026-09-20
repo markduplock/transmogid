@@ -22,7 +22,13 @@ cannot be inspected.
 
 Target a nearby player. If their displayed equipment includes a transmogged
 appearance or weapon illusion, the wardrobe icon appears in the upper-right
-area of the standard target frame. There are no settings or slash commands.
+area of the standard target frame.
+
+For testing, the icon always appears when you target yourself.
+
+Use `/tmid` to open the position menu. The horizontal slider controls the
+icon's X position from `-200` to `0`; select **Save position** to store the
+current value and close the menu.
 
 ## What the icon means
 
