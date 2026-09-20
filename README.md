@@ -7,6 +7,10 @@ It is made for WoW Forever beta and uses the game's inspection data. The icon
 disappears when you target another unit, an NPC, or a player whose appearance
 cannot be inspected.
 
+This is a development verison of the addon and may not function as expected - check the readme for updates.
+
+The released version is available on Curse: https://www.curseforge.com/wow/addons/transmog-id
+
 ## Installation
 
 1. Download or copy this project folder.
