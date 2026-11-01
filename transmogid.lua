@@ -1,3 +1,9 @@
+--[[
+	addon version: 1.0
+	client version: 1.6.1
+	Interface version: 16001
+]]
+
 local addonName = ...
 local TransmogID = CreateFrame("Frame")
 
