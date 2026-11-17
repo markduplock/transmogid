@@ -29,10 +29,10 @@ Target a nearby player. If their displayed equipment includes a transmogged
 appearance or weapon illusion, the wardrobe icon appears in the upper-right
 area of the standard target frame.
 
-Use `/tmid` to open the settings menu and a player-frame image preview.
-
-The sliders adjust horizontal position (`-200` to `0`), vertical position
-(`-90` to `0`), and size (`1x` to `4x`) with immediate preview updates.
+Use `/tmid` to open the player-frame preview. Left-drag the wardrobe icon to
+position it, then scroll the mouse wheel over the icon to resize it in `0.1x`
+steps from `1x` to `4x`. The window shows the current X and Y offsets and scale.
+You can use the preview even when you have no target.
 
 **Save settings** stores all three values and closes the menu.
 
