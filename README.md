@@ -43,8 +43,6 @@ and Cancel undoes the reset.
 
 The preview disappears when the menu closes.
 
-Note that saved settings are not currently working due to the client not reading the SavedVariables: https://us.forums.blizzard.com/en/wow/t/uiaddon-settings-wiped-on-client-restart/2353992
-
 ## What the icon means
 
 The icon means the inspected appearance does not match at least one item the

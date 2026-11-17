@@ -8,7 +8,7 @@ local addonName = ...
 local TransmogID = CreateFrame("Frame")
 
 local pendingGUID
-local lastInspectRequest = 0
+local nextInspectTime = 0
 local INSPECT_COOLDOWN_SECONDS = 2
 
 local DEFAULT_ICON_X_OFFSET = -10
@@ -374,6 +374,7 @@ local function showInspectionResult()
 end
 
 local function inspectTarget()
+    TransmogID:SetScript("OnUpdate", nil)
     hideIcon()
     pendingGUID = nil
 
@@ -389,12 +390,18 @@ local function inspectTarget()
         return
     end
 
-    if GetTime() - lastInspectRequest < INSPECT_COOLDOWN_SECONDS then
+    local now = GetTime()
+    if now < nextInspectTime then
+        TransmogID:SetScript("OnUpdate", function()
+            if GetTime() >= nextInspectTime then
+                inspectTarget()
+            end
+        end)
         return
     end
 
     pendingGUID = UnitGUID("target")
-    lastInspectRequest = GetTime()
+    nextInspectTime = now + INSPECT_COOLDOWN_SECONDS
     NotifyInspect("target")
 end
 
