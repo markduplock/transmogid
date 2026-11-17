@@ -4,21 +4,22 @@
 Transmog ID adds a small wardrobe icon to the default target frame when a
 targeted player has a transmogrified appearance or weapon illusion.
 
-It is made for WoW Forever beta and uses the game's inspection data. The icon
+It is made for WoW Forever and uses the game's inspection data. The icon
 disappears when you target another unit, an NPC, or a player whose appearance
 cannot be inspected.
 
 This is a development verison of the addon and may not function as expected - check the readme for updates.
 
-The released version is available on Curse: https://www.curseforge.com/wow/addons/transmog-id
-
 ## Installation
 
+The released version is available on CurseForge: https://www.curseforge.com/wow/addons/transmog-id
+
+Alternatively:
 1. Download or copy this project folder.
 2. Rename the folder to `TransmogID` if it is not already named that.
 3. Place it in your WoW Forever AddOns directory:
 
-   `World of Warcraft/_classic_beta_/Interface/AddOns/TransmogID`
+   `World of Warcraft/_forever_/Interface/AddOns/TransmogID`
 
 4. Start the game and enable **Transmog ID** in the AddOns list on the
    character-selection screen.
@@ -29,8 +30,8 @@ Target a nearby player. If their displayed equipment includes a transmogged
 appearance or weapon illusion, the wardrobe icon appears in the upper-right
 area of the standard target frame.
 
-Use `/tmid` to open the player-frame preview. Left-drag the wardrobe icon to
-position it, then scroll the mouse wheel over the icon to resize it in `0.1x`
+Use `/tmid` to open the player-frame preview. Drag the wardrobe icon with the left mouse
+button to position it, then scroll the mouse wheel over the icon to resize it in `0.1x`
 steps from `1x` to `4x`. The window shows the current X and Y offsets and scale.
 You can use the preview even when you have no target.
 
@@ -40,8 +41,6 @@ You can use the preview even when you have no target.
 
 **Reset to defaults** previews the default position and size; Save keeps them,
 and Cancel undoes the reset.
-
-The preview disappears when the menu closes.
 
 ## What the icon means
 
@@ -56,7 +55,5 @@ but no altered appearances will not show the icon.
 
 - **No icon for a player:** move closer and target them again. The game only
   supplies inspection data for eligible players in range.
-- **Addon is marked out of date:** enable **Load out of date AddOns**. This is
-  expected while WoW Forever is in beta.
 - **No addon in the list:** check that `TransmogID.toc` is directly inside the
   `TransmogID` folder, alongside `transmogid.lua` and the `media` folder.
